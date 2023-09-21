@@ -1,5 +1,4 @@
 require 'erb'
-require 'unicode/display_width'
 require 'readline'
 
 class ProgressIndicator
@@ -22,7 +21,6 @@ class ProgressIndicator
     classic: ['—', '/', '|', '\\'],
     dots: ['⠋', '⠙', '⠸', '⠴', '⠦', '⠇'],
     braille: ['⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾'],
-    moon: ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'],
     arrows: ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'],
     arc: ['◜', '◠', '◝', '◞', '◡', '◟'],
     bars: ['▁', '▃', '▄', '▅', '▆', '▇', '▆', '▅', '▄', '▃'],
@@ -33,13 +31,10 @@ class ProgressIndicator
     toggle: ['○', '⊙', '◍', '◉', '◍', '⊙'],
     triangle: ['◢', '◣', '◤', '◥'],
     triangle2: ['ᐅ', 'ᐁ', 'ᐊ', 'ᐃ'],
-    weather: ['☀️ ', '🌤', '⛅️', '🌥', '☁️ ', '🌧', '🌨', '🌧', '🌨', '🌧', '🌨', '⛈', '🌨', '🌧', '🌨', '☁️ ', '🌥 ', '⛅️', '🌤'],
     grenade: ['،   ', '′   ', ' ´ ', ' ‾ ', '  ⸌', '  ⸊', '  |', '  ⁎', '  ⁕', ' ෴ ', '  ⁓', '   ', '   ', '   '],
     point: ['∙∙∙', '●∙∙', '∙●∙', '∙∙●'],
     layer: ['-', '=', '≡', '='],
     star: ['✶', '✸', '✹', '✺', '✹', '✷'],
-    monkey: ['🐵', '🙈', '🙉', '🙊'],
-    cat: ['😾', '😿', '🙀', '😾'],
   }
 
   # Define a binding context for the ERB template. This will forward only the needed reader
@@ -164,7 +159,7 @@ class ProgressIndicator
     # Actual content of the frame:
     frame   = ERB.new(template).result(@print_context.get_binding)
     # Fill the terminal width with spaces to clear any extra characters from the previous frame:
-    rpad    = ' ' * (max_width - Unicode::DisplayWidth.of(frame))
+    rpad    = ' ' * [max_width - frame.size, 0].max
 
     puts move_up + frame + rpad
   end

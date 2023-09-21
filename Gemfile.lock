@@ -1,0 +1,16 @@
+PATH
+  remote: .
+  specs:
+    mini_progress (0.0.0)
+
+GEM
+  specs:
+
+PLATFORMS
+  universal-darwin-22
+
+DEPENDENCIES
+  mini_progress!
+
+BUNDLED WITH
+   2.2.25
