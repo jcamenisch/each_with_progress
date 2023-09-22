@@ -1,5 +1,6 @@
 require 'erb'
 require 'readline'
+require 'forwardable'
 
 class ProgressIndicator
   attr_reader :total, :current, :template, :spinner_frames
