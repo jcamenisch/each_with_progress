@@ -2,8 +2,8 @@ require 'erb'
 require 'readline'
 require 'forwardable'
 
-class ProgressIndicator
-  attr_reader :total, :current, :template, :spinner_frames
+class PicoProgress
+  attr_reader :total, :out_io, :current, :template, :spinner_frames
 
   TEMPLATES = {
     spinner: "<%= spinner %>",
@@ -101,8 +101,9 @@ class ProgressIndicator
     end
   end
 
-  def initialize(total: 0, template: nil, spinner: nil)
+  def initialize(total: 0, out_io: $stdout, template: nil, spinner: nil)
     @total = total
+    @out_io = out_io
     @current = 0
     @template = if TEMPLATES.key?(template&.to_sym)
                   TEMPLATES[template.to_sym]
@@ -162,43 +163,18 @@ class ProgressIndicator
     # Fill the terminal width with spaces to clear any extra characters from the previous frame:
     rpad    = ' ' * [max_width - frame.size, 0].max
 
-    puts move_up + frame + rpad
+    out_io.puts move_up + frame + rpad
   end
+end
 
-  # To monkey-patch all Enumerable objects with #each_with_progress/#eachp, run
-  #
-  #   Enumerable.include(ProgressIndicator::Enumerable)
-  #   > [1, 2, 3].eachp { sleep 0.1 }
-  #   ⠴ 3 out of 3 (100%)...
-  #
-  # You can also modify a more targeted collection class:
-  #
-  # Example:
-  #
-  #   > Range.include(ProgressIndicator::Enumerable)
-  #   > (1..10).eachp { sleep 0.1 }
-  #   ⠦ 10 out of 10 (100%)...
-  #   => 1..10
-  #
-  # Or, if you’re using Rails, you can add it to ApplicationRecord:
-  #
-  #   > ApplicationRecord.include(ProgressIndicator::Enumerable)
-  #   > User.all.limit(10).eachp { sleep 0.1 }
-  #   ⠦ 10 out of 10 (100%)...
-  #
-  module Enumerable
-    def self.included(base)
-      base.class_eval do
-        def each_with_progress(template: nil, spinner: nil)
-          progress_indicator = ProgressIndicator.new(total: count, template: template, spinner: spinner)
-          each do |item|
-            yield item
-            progress_indicator.tick
-          end
-        end
+def PicoProgress(enum, **options)
+  Enumerator.new do |yielder|
+    total = options.delete(:total) || enum.count
+    progress_indicator = PicoProgress.new(total: total, **options)
 
-        alias_method :eachp, :each_with_progress
-      end
+    enum.each do |item|
+      yielder << item
+      progress_indicator.tick
     end
   end
 end
