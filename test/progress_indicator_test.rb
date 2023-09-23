@@ -1,6 +1,6 @@
 require 'minitest/autorun'
 require 'minitest/spec'
-require 'mini_progress'
+require 'pico_progressbar'
 
 describe ProgressIndicator do
   it 'Runs a test' do

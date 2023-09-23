@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mini_progress (0.0.0)
+    pico_progressbar (0.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -13,8 +13,8 @@ PLATFORMS
   universal-darwin-22
 
 DEPENDENCIES
-  mini_progress!
   minitest (>= 5.20.0)
+  pico_progressbar!
   rake (>= 13.0.6)
 
 BUNDLED WITH
