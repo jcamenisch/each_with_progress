@@ -3,14 +3,39 @@ require 'readline'
 require 'forwardable'
 
 class PicoProgress
-  attr_reader :total, :out_io, :current, :template, :spinner_frames
+  attr_reader :total, :out_io, :current, :template, :spinner_frames, :complete_spinner_frame
 
+  # Configurable class attributes:
   def self.spinner_frames
     @spinner_frames ||= %w[⠋ ⠙ ⠸ ⠴ ⠦ ⠇]
   end
 
   def self.spinner_frames=(frames)
     @spinner_frames = frames
+  end
+
+  def self.complete_spinner_frame
+    @complete_spinner_frame ||= '✓'
+  end
+
+  def self.complete_spinner_frame=(frame)
+    @complete_spinner_frame = frame
+  end
+
+  def self.template_w_total
+    @template_w_total ||= "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)..."
+  end
+
+  def self.template_w_total=(template)
+    @template_w_total = template
+  end
+
+  def self.template_wo_total
+    @template_wo_total ||= "<%= spinner %> <%= current %>..."
+  end
+
+  def self.template_wo_total=(template)
+    @template_wo_total = template
   end
 
   # Define a binding context for the ERB template. This will forward only the needed reader
@@ -31,22 +56,6 @@ class PicoProgress
     end
   end
 
-  def self.template_w_total
-    @template_w_total ||= "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)..."
-  end
-
-  def self.template_w_total=(template)
-    @template_w_total = template
-  end
-
-  def self.template_wo_total
-    @template_wo_total ||= "<%= spinner %> <%= current %>..."
-  end
-
-  def self.template_wo_total=(template)
-    @template_wo_total = template
-  end
-
   def initialize(total: 0, out_io: $stdout)
     @total = total
     @out_io = out_io
@@ -57,6 +66,7 @@ class PicoProgress
                   self.class.template_wo_total
                 end
     @spinner_frames = self.class.spinner_frames
+    @complete_spinner_frame = self.class.complete_spinner_frame
     @print_context = PrintContext.new(self)
   end
 
@@ -66,6 +76,10 @@ class PicoProgress
 
   def remaining
     total - current
+  end
+
+  def complete?
+    total.is_a?(Integer) && current >= total
   end
 
   def tick
@@ -85,7 +99,11 @@ class PicoProgress
   end
 
   def spinner
-    spinner_frames[current % spinner_frames.length]
+    if complete?
+      complete_spinner_frame
+    else
+      spinner_frames[current % spinner_frames.length]
+    end
   end
 
   def print_progress
