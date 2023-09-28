@@ -13,20 +13,6 @@ class PicoProgress
     @spinner_frames = frames
   end
 
-  TEMPLATES = {
-    spinner: "<%= spinner %>",
-    spinner_n: "<%= spinner %> <%= current %> complete...",
-    spinner_n_out_of_t: "<%= spinner %> <%= current %> out of <%= total %> complete...",
-    spinner_percent: "<%= spinner %> <%= percent %> complete%",
-    spinner_n_percent: "<%= spinner %> <%= current %> (<%= percent %>%) complete...",
-    spinner_n_out_of_t_percent: "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)...",
-    n: "<%= current %> complete...",
-    n_out_of_t: "<%= current %> out of <%= total %> complete...",
-    percent: "<%= percent %>% complete...",
-    n_percent: "<%= current %> (<%= percent %>%) complete...",
-    n_out_of_t_percent: "<%= current %> out of <%= total %> (<%= percent %>%) complete...",
-  }
-
   # Define a binding context for the ERB template. This will forward only the needed reader
   # methods back to the progress indicator without any unsafe (state-changing) methods.
   #
@@ -45,48 +31,30 @@ class PicoProgress
     end
   end
 
-  def self.default_template
-    @default_template || ENV['PROGRESS_INDICATOR_TEMPLATE'] || default_template_wo_total
+  def self.template_w_total
+    @template_w_total ||= "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)..."
   end
 
-  def self.default_template=(template)
-    @default_template = template_key(template)
+  def self.template_w_total=(template)
+    @template_w_total = template
   end
 
-  def self.default_template_w_total
-    @default_template_w_total || ENV['PROGRESS_INDICATOR_TEMPLATE_W_TOTAL'] || @default_template || :spinner_n_out_of_t_percent
+  def self.template_wo_total
+    @template_wo_total ||= "<%= spinner %> <%= current %>..."
   end
 
-  def self.default_template_w_total=(template)
-    @default_template_w_total = template_key(template)
-  end
-
-  def self.default_template_wo_total
-    @default_template_wo_total || ENV['PROGRESS_INDICATOR_TEMPLATE_WO_TOTAL'] || :spinner_n
-  end
-
-  def self.default_template_wo_total=(template)
-    @default_template_wo_total = template_key(template)
-  end
-
-  def self.template_key(template)
-    template = template.to_sym
-
-    if TEMPLATES.key?(template)
-      template
-    else
-      raise "Unknown template: #{template}"
-    end
+  def self.template_wo_total=(template)
+    @template_wo_total = template
   end
 
   def initialize(total: 0, out_io: $stdout)
     @total = total
     @out_io = out_io
     @current = 0
-    @template = if total == 0
-                  TEMPLATES[self.class.default_template_wo_total]
+    @template = if total.is_a?(Integer)
+                  self.class.template_w_total
                 else
-                  TEMPLATES[self.class.default_template_w_total]
+                  self.class.template_wo_total
                 end
     @spinner_frames = self.class.spinner_frames
     @print_context = PrintContext.new(self)
