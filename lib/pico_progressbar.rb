@@ -5,6 +5,14 @@ require 'forwardable'
 class PicoProgress
   attr_reader :total, :out_io, :current, :template, :spinner_frames
 
+  def self.spinner_frames
+    @spinner_frames ||= %w[⠋ ⠙ ⠸ ⠴ ⠦ ⠇]
+  end
+
+  def self.spinner_frames=(frames)
+    @spinner_frames = frames
+  end
+
   TEMPLATES = {
     spinner: "<%= spinner %>",
     spinner_n: "<%= spinner %> <%= current %> complete...",
@@ -17,25 +25,6 @@ class PicoProgress
     percent: "<%= percent %>% complete...",
     n_percent: "<%= current %> (<%= percent %>%) complete...",
     n_out_of_t_percent: "<%= current %> out of <%= total %> (<%= percent %>%) complete...",
-  }
-  SPINNER_FRAME_SETS = {
-    classic: ['—', '/', '|', '\\'],
-    dots: ['⠋', '⠙', '⠸', '⠴', '⠦', '⠇'],
-    braille: ['⣷', '⣯', '⣟', '⡿', '⢿', '⣻', '⣽', '⣾'],
-    arrows: ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'],
-    arc: ['◜', '◠', '◝', '◞', '◡', '◟'],
-    bars: ['▁', '▃', '▄', '▅', '▆', '▇', '▆', '▅', '▄', '▃'],
-    pipe: ['┤', '┘', '┴', '└', '├', '┌', '┬', '┐'],
-    circle_quarters: ['◴', '◷', '◶', '◵'],
-    circle_halves: ['◐', '◓', '◑', '◒'],
-    squish: ['╫', '╪'],
-    toggle: ['○', '⊙', '◍', '◉', '◍', '⊙'],
-    triangle: ['◢', '◣', '◤', '◥'],
-    triangle2: ['ᐅ', 'ᐁ', 'ᐊ', 'ᐃ'],
-    grenade: ['،   ', '′   ', ' ´ ', ' ‾ ', '  ⸌', '  ⸊', '  |', '  ⁎', '  ⁕', ' ෴ ', '  ⁓', '   ', '   ', '   '],
-    point: ['∙∙∙', '●∙∙', '∙●∙', '∙∙●'],
-    layer: ['-', '=', '≡', '='],
-    star: ['✶', '✸', '✹', '✺', '✹', '✷'],
   }
 
   # Define a binding context for the ERB template. This will forward only the needed reader
@@ -54,17 +43,6 @@ class PicoProgress
     def get_binding
       binding
     end
-  end
-
-  def self.default_spinner
-    @default_spinner ||= ENV['PROGRESS_INDICATOR_SPINNER'] || :dots
-  end
-
-  def self.default_spinner=(spinner)
-    spinner = spinner.to_sym
-    raise "Unknown spinner: #{spinner}" unless SPINNER_FRAME_SETS.key?(spinner)
-
-    @default_spinner = spinner
   end
 
   def self.default_template
@@ -101,29 +79,16 @@ class PicoProgress
     end
   end
 
-  def initialize(total: 0, out_io: $stdout, template: nil, spinner: nil)
+  def initialize(total: 0, out_io: $stdout)
     @total = total
     @out_io = out_io
     @current = 0
-    @template = if TEMPLATES.key?(template&.to_sym)
-                  TEMPLATES[template.to_sym]
-                elsif template
-                  template
-                elsif total == 0
+    @template = if total == 0
                   TEMPLATES[self.class.default_template_wo_total]
                 else
                   TEMPLATES[self.class.default_template_w_total]
                 end
-    @spinner_frames = case spinner
-                      when nil
-                        SPINNER_FRAME_SETS[self.class.default_spinner]
-                      when Symbol, String
-                        SPINNER_FRAME_SETS[spinner.to_sym] || raise("Unknown spinner: #{spinner}")
-                      when Array
-                        spinner
-                      else
-                        raise "Unknown spinner: #{spinner}"
-                      end
+    @spinner_frames = self.class.spinner_frames
     @print_context = PrintContext.new(self)
   end
 
