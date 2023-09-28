@@ -23,7 +23,7 @@ class PicoProgress
   end
 
   def self.template_w_total
-    @template_w_total ||= "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)..."
+    @template_w_total ||= "<%= spinner %> <%= current %> out of <%= total %> (<%= percent %>%)"
   end
 
   def self.template_w_total=(template)
@@ -31,7 +31,7 @@ class PicoProgress
   end
 
   def self.template_wo_total
-    @template_wo_total ||= "<%= spinner %> <%= current %>..."
+    @template_wo_total ||= "<%= spinner %> <%= current %>"
   end
 
   def self.template_wo_total=(template)
