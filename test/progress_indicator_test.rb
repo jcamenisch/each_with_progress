@@ -27,6 +27,11 @@ describe PicoProgress do
 \r\e[1A✓ 10 out of 10 (100%)
       EOS
     end
+
+    it 'reports the count of the underlying collection' do
+      _(subject.count).must_equal 10
+      _(subject.count(&:odd?)).must_equal 5
+    end
   end
 
   describe 'when given an endless range' do
@@ -49,6 +54,10 @@ describe PicoProgress do
 \r\e[1A⠴ 9
 \r\e[1A⠦ 10
       EOS
+    end
+
+    it 'reports the count of the underlying collection' do
+      _(subject.count).must_equal Float::INFINITY
     end
   end
 end

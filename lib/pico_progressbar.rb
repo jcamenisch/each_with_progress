@@ -3,7 +3,36 @@ require 'readline'
 require 'forwardable'
 
 class PicoProgress
+  include Enumerable
+  extend Forwardable
+
+  def_delegators :@enumerable, :count, :size, :length
+
   attr_reader :total, :out_io, :current, :template, :spinner_frames, :complete_spinner_frame
+
+  def initialize(enumerable, out_io: $stdout)
+    @enumerable = enumerable
+    @total = @enumerable.respond_to?(:size) ? @enumerable.size : nil
+    @out_io = out_io
+    @current = 0
+    @template = if @total.is_a?(Integer)
+                  self.class.template_w_total
+                else
+                  self.class.template_wo_total
+                end
+    @spinner_frames = self.class.spinner_frames
+    @complete_spinner_frame = self.class.complete_spinner_frame
+    @print_context = PrintContext.new(self)
+  end
+
+  def each
+    return enum_for(:each) unless block_given?
+
+    @enumerable.each do |item|
+      yield item
+      tick
+    end
+  end
 
   # Configurable class attributes:
   def self.spinner_frames
@@ -56,20 +85,6 @@ class PicoProgress
     end
   end
 
-  def initialize(total: 0, out_io: $stdout)
-    @total = total
-    @out_io = out_io
-    @current = 0
-    @template = if total.is_a?(Integer)
-                  self.class.template_w_total
-                else
-                  self.class.template_wo_total
-                end
-    @spinner_frames = self.class.spinner_frames
-    @complete_spinner_frame = self.class.complete_spinner_frame
-    @print_context = PrintContext.new(self)
-  end
-
   def max_width
     ::Readline.get_screen_size.last
   end
@@ -118,14 +133,6 @@ class PicoProgress
   end
 end
 
-def PicoProgress(enum, **options)
-  Enumerator.new do |yielder|
-    total = options.delete(:total) || enum.count
-    progress_indicator = PicoProgress.new(total: total, **options)
-
-    enum.each do |item|
-      yielder << item
-      progress_indicator.tick
-    end
-  end
+def PicoProgress(enumerable, **options)
+  PicoProgress.new(enumerable, **options)
 end
